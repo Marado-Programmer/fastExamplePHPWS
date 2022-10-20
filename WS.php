@@ -19,7 +19,18 @@ class WS
 
         $this->method = isset($_SERVER["REQUEST_METHOD"]) ? $_SERVER["REQUEST_METHOD"] : $this->method;
 
-        $this->data = $this->loadMethod();
+        try {
+            $this->data = $this->prepareRes($this->loadMethod());
+
+            header("Content-Type: application/json");
+
+            echo json_encode($this->data);
+        } catch (\Error $e) {
+            if ($e->getMessage() == 405)
+                header("HTTP/1.0 405 Method Not Allowed") && exit;
+
+            echo $e->getMessage();
+        }
     }
 
     private function loadMethod()
@@ -99,7 +110,7 @@ class WS
         ];
     }
 
-    private function prepareRes(array $data, $table): array
+    private function prepareRes(array $data): array
     {
         count($data) >= 2 ? $data : (isset($data[0]) ? $data[0] : []);
 
