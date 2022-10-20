@@ -56,7 +56,7 @@ class DB
         return self::$connection;
     }
 
-    public function query($stmt, $data = null) {
+    public function query($stmt, $data = null): \PDOStatement {
         $query = $this->pdo->prepare($stmt);
         $check_exec = $query->execute($data);
 
