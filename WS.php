@@ -11,6 +11,8 @@ class WS
 
     private $method = "GET";
 
+    private string $classTable;
+
     public function __construct()
     {
         $this->dbh = 
@@ -35,6 +37,8 @@ class WS
         $classTable = get_class_vars(__NAMESPACE__ . "\\$table")["table"];
 
         if (!isset($classTable)) throw new \Error("Unknown resource");
+
+        $this->classTable = $classTable;
 
         try {
             return $this->{$this->method}($classTable, $id);
@@ -61,7 +65,7 @@ class WS
         $this->dbh->insert($table, $this->data);
 
         return [
-            "status" => 1,
+            "status" => 0,
             "statusText" => "$table inserted successfully"
         ];
     }
@@ -73,14 +77,38 @@ class WS
         $this->dbh->update($table, "id", $id, $this->data);
 
         return [
-            "status" => 1,
+            "status" => 0,
             "statusText" => "$table updated successfully"
         ];
     }
 
     private function delete(string $table, ?int $id)
     {
-        $select = $this->prepareRes($this->get($table, $id));
+        $select = $this->prepareRes($this->get($table, $id), $table);
+
+        if (!$select["status"]) return [
+            "status" => 1,
+            "statusText" => "$table not deleted"
+        ];
+
+        $this->dbh->delete($table, "id", $id);
+
+        return [
+            "status" => 0,
+            "statusText" => "$table updated successfully"
+        ];
+    }
+
+    private function prepareRes(array $data, $table): array
+    {
+        count($data) >= 2 ? $data : (isset($data[0]) ? $data[0] : []);
+
+        if (!$data) return [
+            "status" => 1,
+            "statusText" => "no data found"
+        ];
+
+        return (array) new $this->classTable($data);
     }
 }
 
